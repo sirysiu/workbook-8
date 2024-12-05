@@ -1,34 +1,54 @@
 package com.pluralsight;
 
+import org.apache.commons.dbcp2.BasicDataSource;
+
+import javax.sql.DataSource;
 import java.sql.*;
+import java.util.Scanner;
 
 public class SqlApp {
     public static void main(String[] args) throws SQLException {
+
+        BasicDataSource dataSource = new BasicDataSource();
 
         String url = "jdbc:mysql://localhost:3306/cardealership";
         String user = "root";
         String password = "yearup24";
 
-        try {
+        dataSource.setUsername(user);
+        dataSource.setPassword(password);
+        dataSource.setUrl(url);
 
-            Connection connection = DriverManager.getConnection(url, user, password);
 
-            Statement statement = connection.createStatement();
-            statement.executeQuery("SELECT * FROM vehicles;");
+        Scanner scanner = new Scanner(System.in);
 
-            ResultSet resultSet = statement.getResultSet();
-            System.out.println(resultSet);
+        boolean running = true;
 
-            while(resultSet.next()){
-                String make = resultSet.getNString("make");
-                String model = resultSet.getNString("model");
-                int year = resultSet.getInt("year");
-                System.out.printf("%-20s %-20s %-10d\n", make, model, year);
+        while (running) {
+
+            System.out.print("Enter the make you are looking for: ");
+            String makeToSearch = scanner.nextLine();
+
+            try (Connection connection = DriverManager.getConnection(url, user, password)) {
+
+
+                PreparedStatement statement = connection.prepareStatement("select * from vehicles where make = '" + makeToSearch + "' ;");
+                statement.execute();
+
+                ResultSet resultSet = statement.getResultSet();
+                System.out.println(resultSet);
+
+                while (resultSet.next()) {
+                    String make = resultSet.getNString("make");
+                    String model = resultSet.getNString("model");
+                    int year = resultSet.getInt("year");
+                    System.out.printf("%-20s %-20s %-10d\n", make, model, year);
+                }
+
+
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
             }
-
-
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
         }
 
     }
